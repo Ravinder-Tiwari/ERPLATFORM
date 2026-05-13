@@ -7,12 +7,14 @@ import axios from 'axios'
 import { COMPANY_API_END_POINT } from '@/utils/constant'
 import { useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
-import { useSelector } from 'react-redux'
+import { useSelector, useDispatch } from 'react-redux'
+import { setSingleCompany } from '@/redux/companySlice'
 import useGetCompanyById from '@/hooks/useGetCompanyById'
 import { motion } from 'framer-motion'
 
 const CompanySetup = () => {
     const params = useParams();
+    const dispatch = useDispatch();
     useGetCompanyById(params.id);
     const [input, setInput] = useState({
         name: "",
@@ -49,10 +51,13 @@ const CompanySetup = () => {
 
     const submitHandler = async (e) => {
         e.preventDefault();
+        console.log("Submit handler triggered");
+        
         if (!validate()) {
             toast.error("Please fill all the required fields.");
             return;
         }
+        
         const formData = new FormData();
         formData.append("name", input.name);
         formData.append("description", input.description);
@@ -61,6 +66,15 @@ const CompanySetup = () => {
         if (input.file) {
             formData.append("file", input.file);
         }
+        
+        console.log("FormData prepared:", {
+            name: input.name,
+            description: input.description,
+            website: input.website,
+            location: input.location,
+            hasFile: !!input.file
+        });
+        
         try {
             setLoading(true);
             const res = await axios.put(`${COMPANY_API_END_POINT}/update/${params.id}`, formData, {
@@ -69,13 +83,22 @@ const CompanySetup = () => {
                 },
                 withCredentials: true
             });
+            
+            console.log("Response from update:", res.data);
+            
             if (res.data.success) {
+                // Dispatch updated company to Redux
+                if (res.data.company) {
+                    console.log("Dispatching company to Redux:", res.data.company);
+                    dispatch(setSingleCompany(res.data.company));
+                }
                 toast.success(res.data.message);
                 navigate("/admin");
             }
         } catch (error) {
-            console.log(error);
-            toast.error(error.response.data.message);
+            console.log("Error updating company:", error);
+            console.log("Error response:", error.response?.data);
+            toast.error(error.response?.data?.message || "Failed to update company.");
         } finally {
             setLoading(false);
         }

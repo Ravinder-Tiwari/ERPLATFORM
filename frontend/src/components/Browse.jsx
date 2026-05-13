@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { setSearchedQuery } from '@/redux/jobSlice';
 
 import { Input } from './ui/input';
-import { Search, MapPin, BriefcaseIcon, IndianRupeeIcon, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, MapPin, BriefcaseIcon, IndianRupeeIcon, ChevronDown, ChevronUp, CloudCog } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import useGetAllJobs from '@/hooks/useGetAllJobs';
 
@@ -14,7 +14,7 @@ import useGetAllJobs from '@/hooks/useGetAllJobs';
 const Browse = () => {
     const dispatch = useDispatch();
     const { allJobs } = useSelector(store => store.job);
-    
+    console.log(allJobs)
     // Initialize jobs loading
     useGetAllJobs()
 

@@ -18,26 +18,26 @@ const useGetAllJobs = () => {
 
             try {
 
-                console.log("HOOK RUNNING");
+                console.log("HOOK RUNNING - Fetching all jobs");
 
                 const res = await axios.get(
-                    `${JOB_API_END_POINT}/get?keyword=${searchedQuery}`
+                    `${JOB_API_END_POINT}/get${searchedQuery ? `?keyword=${searchedQuery}` : ''}`
                 );
 
-                console.log(res.data);
+                console.log("Jobs fetched:", res.data);
 
                 if(res.data.success){
                     dispatch(setAllJobs(res.data.jobs));
                 }
 
             } catch (error) {
-                console.log(error);
+                console.error("Error fetching jobs:", error);
             }
         }
 
         fetchAllJobs();
 
-    }, [dispatch, searchedQuery]);
+    }, [dispatch]);
 
     return null;
 }

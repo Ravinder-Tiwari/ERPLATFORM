@@ -7,7 +7,7 @@ import axios from 'axios';
 import { COMPANY_API_END_POINT } from '@/utils/constant';
 import { toast } from 'sonner';
 import { useDispatch, useSelector } from 'react-redux';
-import { setSingleCompany } from '@/redux/companySlice';
+import { setSingleCompany, setCompanies } from '@/redux/companySlice';
 import { motion } from 'framer-motion';
 import { Building, ArrowLeft } from 'lucide-react';
 import { selectUserId } from '@/redux/authSlice';
@@ -54,6 +54,17 @@ const CompanyCreate = () => {
             );
             if (res?.data?.success) {
                 dispatch(setSingleCompany(res.data.company));
+                
+                // Refresh companies list
+                try {
+                    const companiesRes = await axios.get(`${COMPANY_API_END_POINT}/get`, { withCredentials: true });
+                    if (companiesRes.data.success) {
+                        dispatch(setCompanies(companiesRes.data.companies));
+                    }
+                } catch (error) {
+                    console.log('Error refreshing companies:', error);
+                }
+                
                 toast.success(res.data.message);
                 const companyId = res?.data?.company?._id;
                 navigate(`/admin/companies/${companyId}`);

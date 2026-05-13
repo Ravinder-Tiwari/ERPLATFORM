@@ -2,12 +2,15 @@ import React, { useEffect, useState } from 'react'
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '../ui/table'
 import { Avatar, AvatarImage } from '../ui/avatar'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
-import { Edit2, Eye, MoreHorizontal, Briefcase } from 'lucide-react'
+import { Edit2, Eye, MoreHorizontal, Briefcase, Trash2 } from 'lucide-react'
 import { useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Badge } from '../ui/badge'
 import { Tab } from 'react-bootstrap'
+import axios from 'axios'
+import { JOB_API_END_POINT } from '@/utils/constant'
+import { successToast, errorToast } from '@/utils/toast'
 
 const AdminJobsTable = ({ onJobClick }) => { 
     const {allAdminJobs, searchJobByText} = useSelector(store=>store.job);
@@ -25,6 +28,20 @@ const AdminJobsTable = ({ onJobClick }) => {
         });
         setFilterJobs(filteredJobs);
     },[allAdminJobs,searchJobByText])
+
+    const handleDeleteJob = async (jobId) => {
+        try {
+            const res = await axios.delete(`${JOB_API_END_POINT}/delete/${jobId}`, { withCredentials: true });
+            if (res.data.success) {
+                successToast(res.data.message);
+                // Refresh the jobs list
+                window.location.reload();
+            }
+        } catch (error) {
+            errorToast(error.response?.data?.message || 'Failed to delete job');
+            console.error('Error deleting job:', error);
+        }
+    }
 
     return (
         <motion.div 
@@ -98,6 +115,14 @@ const AdminJobsTable = ({ onJobClick }) => {
                                         >
                                             <Eye className='w-4'/>
                                             <span>View Applicants</span>
+                                        </motion.div>
+                                        <motion.div 
+                                            whileHover={{ backgroundColor: "#fef2f2" }}
+                                            onClick={() => handleDeleteJob(job._id)} 
+                                            className='flex items-center w-full gap-2 cursor-pointer mt-2 p-2 rounded hover:text-red-600'
+                                        >
+                                            <Trash2 className='w-4'/>
+                                            <span>Delete Job</span>
                                         </motion.div>
                                     </PopoverContent>
                                 </Popover>

@@ -119,6 +119,7 @@ export const getAllJobs = async (req, res) => {
         console.log("getAllJobs route hit");  
         const keyword = req.query.keyword || "";
         const query = {
+            isActive: true,
             $or: [
                 { title: { $regex: keyword, $options: "i" } },
                 { description: { $regex: keyword, $options: "i" } },
@@ -163,7 +164,7 @@ export const getJobById = async (req, res) => {
 export const getAdminJobs = async (req, res) => {
     try {
         const adminId = req.id;
-        const jobs = await Job.find({ created_by: adminId }).populate({
+        const jobs = await Job.find({ created_by: adminId, isActive: true }).populate({
             path:'company',
             createdAt:-1
         });
@@ -179,5 +180,45 @@ export const getAdminJobs = async (req, res) => {
         })
     } catch (error) {
         console.log(error);
+    }
+}
+
+// Delete a job (soft delete - set isActive to false)
+export const deleteJob = async (req, res) => {
+    try {
+        const jobId = req.params.id;
+        const adminId = req.id;
+
+        // Find the job and verify the current user is the creator
+        const job = await Job.findById(jobId);
+        
+        if (!job) {
+            return res.status(404).json({
+                message: "Job not found.",
+                success: false
+            });
+        }
+
+        if (job.created_by.toString() !== adminId.toString()) {
+            return res.status(403).json({
+                message: "You can only delete your own jobs.",
+                success: false
+            });
+        }
+
+        // Soft delete - set isActive to false
+        job.isActive = false;
+        await job.save();
+
+        return res.status(200).json({
+            message: "Job deleted successfully.",
+            success: true
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            message: "Error deleting job.",
+            success: false
+        });
     }
 }

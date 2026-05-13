@@ -40,6 +40,10 @@ export const registerCompany = async (req, res) => {
         })
     } catch (error) {
         console.log(error);
+        return res.status(500).json({
+            message: "Error registering company.",
+            success: false
+        });
     }
 }
 export const getCompany = async (req, res) => {
@@ -58,6 +62,10 @@ export const getCompany = async (req, res) => {
         })
     } catch (error) {
         console.log(error);
+        return res.status(500).json({
+            message: "Error fetching companies.",
+            success: false
+        });
     }
 }
 // get company by id
@@ -77,11 +85,21 @@ export const getCompanyById = async (req, res) => {
         })
     } catch (error) {
         console.log(error);
+        return res.status(500).json({
+            message: "Error fetching company.",
+            success: false
+        });
     }
 }
 export const updateCompany = async (req, res) => {
     try {
         const { name, description, website, location } = req.body;
+        
+        console.log("Update company request:", {
+            companyId: req.params.id,
+            name, description, website, location,
+            hasFile: !!req.file
+        });
 
         const existingCompany = await Company.findById(req.params.id);
         if (!existingCompany) {
@@ -94,9 +112,11 @@ export const updateCompany = async (req, res) => {
         const updateData = { name, description, website, location };
 
         if (req.file) {
+            console.log("Uploading file to Cloudinary:", req.file.filename);
             const fileUri = getDataUri(req.file);
             const cloudResponse = await cloudinary.uploader.upload(fileUri.content);
             updateData.logo = cloudResponse.secure_url;
+            console.log("Logo URL:", cloudResponse.secure_url);
         }
 
         const company = await Company.findByIdAndUpdate(req.params.id, updateData, { new: true });
@@ -107,12 +127,20 @@ export const updateCompany = async (req, res) => {
                 success: false
             })
         }
+        
+        console.log("Company updated successfully:", company);
+        
         return res.status(200).json({
             message:"Company information updated.",
+            company,
             success:true
         })
 
     } catch (error) {
-        console.log(error);
+        console.log("Error updating company:", error);
+        return res.status(500).json({
+            message: "Error updating company.",
+            success: false
+        });
     }
 }

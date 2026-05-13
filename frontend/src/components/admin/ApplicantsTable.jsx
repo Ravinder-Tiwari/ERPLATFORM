@@ -1,17 +1,20 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '../ui/table'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { MoreHorizontal, FileText, Mail, Phone } from 'lucide-react';
+import { MoreHorizontal, FileText, Mail, Phone, Eye } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { toast } from 'sonner';
 import { APPLICATION_API_END_POINT } from '@/utils/constant';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import { Badge } from '../ui/badge';
+import ApplicantProfileModal from './ApplicantProfileModal';
 
 const shortlistingStatus = ["Accepted", "Rejected", "Pending"];
 
 const ApplicantsTable = ({ applicants: applicantsProp }) => {
+    const [selectedApplicant, setSelectedApplicant] = useState(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const { applicants } = useSelector(store => store.application);
     const applicationRows = Array.isArray(applicantsProp)
         ? applicantsProp
@@ -25,10 +28,22 @@ const ApplicantsTable = ({ applicants: applicantsProp }) => {
             const res = await axios.post(`${APPLICATION_API_END_POINT}/status/${id}/update`, { status });
             if (res.data.success) {
                 toast.success(res.data.message);
+                // Refresh the page to see updated status
+                window.location.reload();
             }
         } catch (error) {
             toast.error(error.response.data.message);
         }
+    }
+
+    const handleViewProfile = (applicant) => {
+        setSelectedApplicant(applicant);
+        setIsModalOpen(true);
+    }
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+        setSelectedApplicant(null);
     }
 
     return (
@@ -97,7 +112,15 @@ const ApplicantsTable = ({ applicants: applicantsProp }) => {
                                             <MoreHorizontal className="cursor-pointer" />
                                         </motion.div>
                                     </PopoverTrigger>
-                                    <PopoverContent className="w-40">
+                                    <PopoverContent className="w-48">
+                                        <motion.div 
+                                            whileHover={{ backgroundColor: "#f3f4f6" }}
+                                            onClick={() => handleViewProfile(item)}
+                                            className='flex w-full items-center my-2 cursor-pointer p-2 rounded gap-2'
+                                        >
+                                            <Eye className='w-4 h-4' />
+                                            <span>View Profile</span>
+                                        </motion.div>
                                         {shortlistingStatus.map((status, index) => (
                                             <motion.div
                                                 key={index}
@@ -121,6 +144,14 @@ const ApplicantsTable = ({ applicants: applicantsProp }) => {
                     )}
                 </TableBody>
             </Table>
+            
+            {/* Applicant Profile Modal */}
+            <ApplicantProfileModal 
+                isOpen={isModalOpen} 
+                onClose={handleCloseModal} 
+                applicant={selectedApplicant}
+                onUpdateStatus={statusHandler}
+            />
         </motion.div>
     )
 }
