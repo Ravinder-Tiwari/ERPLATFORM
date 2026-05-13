@@ -37,10 +37,10 @@ const AdminHome = () => {
   ];
 
   const quickLinks = [
-    { 
-      title: 'Post New Job', 
-      path: '/admin/jobs/create', 
-      icon: PlusCircle, 
+    {
+      title: 'Post New Job',
+      path: '/admin/jobs/create',
+      icon: PlusCircle,
       color: 'from-indigo-500 to-indigo-600',
       onClick: () => navigate('/admin/jobs/create')
     },
@@ -138,7 +138,7 @@ const AdminHome = () => {
           >
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">Recent Job Posts</h2>
-              <Link 
+              <Link
                 to="/admin/jobs"
                 className="text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors"
               >
@@ -154,7 +154,7 @@ const AdminHome = () => {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.35 + index * 0.1 }}
-                    onClick={() => navigate(`/admin/jobs/${job._id}`)}
+                    onClick={() => navigate(`/description/${job._id}`)}
                     className="p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-red-500 dark:hover:border-red-400 hover:shadow-md transition-all cursor-pointer bg-gray-50 dark:bg-gray-800/50"
                   >
                     <div className="flex items-start justify-between mb-3">
@@ -199,7 +199,7 @@ const AdminHome = () => {
               <div className="text-center py-8">
                 <Briefcase className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
                 <p className="text-sm text-gray-400 dark:text-gray-500">No recent job posts to display.</p>
-                <Link 
+                <Link
                   to="/admin/jobs/create"
                   className="inline-block mt-3 text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-medium transition-colors"
                 >
@@ -218,7 +218,7 @@ const AdminHome = () => {
           >
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">Recent Applicants</h2>
-              <Link 
+              <Link
                 to="/admin/applicants"
                 className="text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors"
               >
@@ -250,11 +250,11 @@ const AdminHome = () => {
                           </p>
                         </div>
                       </div>
-                      <Badge 
+                      <Badge
                         variant={
                           applicant.status === 'accepted' ? 'default' :
-                          applicant.status === 'rejected' ? 'destructive' :
-                          'secondary'
+                            applicant.status === 'rejected' ? 'destructive' :
+                              'secondary'
                         }
                         className="text-xs capitalize"
                       >

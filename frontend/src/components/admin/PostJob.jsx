@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import axios from 'axios'
 import { JOB_API_END_POINT } from '@/utils/constant'
 import { useNavigate } from 'react-router-dom'
-import { Briefcase, ArrowLeft, DollarSign, MapPin, Clock, Users } from 'lucide-react'
+import { Briefcase, ArrowLeft } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Textarea } from '@/components/ui/textarea'
 import { successToast, errorToast } from '@/utils/toast'
@@ -74,7 +74,7 @@ const PostJob = () => {
                 .join(', ');
 
 
-                
+
             const formattedInput = {
                 title: input.title,
                 description: input.description,
@@ -86,7 +86,7 @@ const PostJob = () => {
                 position: parseInt(input.position),
                 companyId: input.company
             };
-            
+
             const res = await axios({
                 method: 'post',
                 url: `${JOB_API_END_POINT}/post`,
@@ -104,7 +104,7 @@ const PostJob = () => {
             }
         } catch (error) {
             console.error("Job posting error:", error);
-            
+
             if (error.response) {
                 if (error.response.status === 400) {
                     errorToast(error.response.data.message || "Invalid job data. Please check your inputs.");
@@ -160,59 +160,44 @@ const PostJob = () => {
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="salary" className="text-sm font-semibold text-gray-700 dark:text-gray-300">Salary (per annum)</Label>
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <DollarSign className="h-4 w-4 text-gray-400" />
-                                    </div>
-                                    <Input
-                                        id="salary"
-                                        type="number"
-                                        name="salary"
-                                        placeholder="120000"
-                                        value={input.salary}
-                                        onChange={changeEventHandler}
-                                        className={`pl-10 bg-white/50 dark:bg-gray-900/50 rounded-xl focus:ring-red-500 border-gray-200 dark:border-white/10 dark:text-white ${errors.salary ? 'border-red-500' : ''}`}
-                                        required
-                                    />
-                                </div>
+                                <Input
+                                    id="salary"
+                                    type="number"
+                                    name="salary"
+                                    placeholder="120000"
+                                    value={input.salary}
+                                    onChange={changeEventHandler}
+                                    className={`bg-white/50 dark:bg-gray-900/50 rounded-xl focus:ring-red-500 border-gray-200 dark:border-white/10 dark:text-white ${errors.salary ? 'border-red-500' : ''}`}
+                                    required
+                                />
                                 {errors.salary && <p className="mt-1 text-xs text-red-500">{errors.salary}</p>}
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="experience" className="text-sm font-semibold text-gray-700 dark:text-gray-300">Experience (years)</Label>
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <Clock className="h-4 w-4 text-gray-400" />
-                                    </div>
-                                    <Input
-                                        id="experience"
-                                        type="number"
-                                        name="experience"
-                                        placeholder="5"
-                                        value={input.experience}
-                                        onChange={changeEventHandler}
-                                        className={`pl-10 bg-white/50 dark:bg-gray-900/50 rounded-xl focus:ring-red-500 border-gray-200 dark:border-white/10 dark:text-white ${errors.experience ? 'border-red-500' : ''}`}
-                                        required
-                                    />
-                                </div>
+                                <Input
+                                    id="experience"
+                                    type="number"
+                                    name="experience"
+                                    placeholder="5"
+                                    value={input.experience}
+                                    onChange={changeEventHandler}
+                                    className={`bg-white/50 dark:bg-gray-900/50 rounded-xl focus:ring-red-500 border-gray-200 dark:border-white/10 dark:text-white ${errors.experience ? 'border-red-500' : ''}`}
+                                    required
+                                />
                                 {errors.experience && <p className="mt-1 text-xs text-red-500">{errors.experience}</p>}
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="location" className="text-sm font-semibold text-gray-700 dark:text-gray-300">Location</Label>
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <MapPin className="h-4 w-4 text-gray-400" />
-                                    </div>
-                                    <Input
-                                        id="location"
-                                        type="text"
-                                        name="location"
-                                        placeholder="San Francisco, CA"
-                                        value={input.location}
-                                        onChange={changeEventHandler}
-                                        className={`pl-10 bg-white/50 dark:bg-gray-900/50 rounded-xl focus:ring-red-500 border-gray-200 dark:border-white/10 dark:text-white ${errors.location ? 'border-red-500' : ''}`}
-                                        required
-                                    />
-                                </div>
+                                <Input
+                                    id="location"
+                                    type="text"
+                                    name="location"
+                                    placeholder="San Francisco, CA"
+                                    value={input.location}
+                                    onChange={changeEventHandler}
+                                    className={`bg-white/50 dark:bg-gray-900/50 rounded-xl focus:ring-red-500 border-gray-200 dark:border-white/10 dark:text-white ${errors.location ? 'border-red-500' : ''}`}
+                                    required
+                                />
                                 {errors.location && <p className="mt-1 text-xs text-red-500">{errors.location}</p>}
                             </div>
                         </div>
@@ -263,21 +248,16 @@ const PostJob = () => {
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="position" className="text-sm font-semibold text-gray-700 dark:text-gray-300">Positions Available</Label>
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <Users className="h-4 w-4 text-gray-400" />
-                                    </div>
-                                    <Input
-                                        id="position"
-                                        type="number"
-                                        name="position"
-                                        placeholder="2"
-                                        value={input.position}
-                                        onChange={changeEventHandler}
-                                        className={`pl-10 bg-white/50 dark:bg-gray-900/50 rounded-xl focus:ring-red-500 border-gray-200 dark:border-white/10 dark:text-white ${errors.position ? 'border-red-500' : ''}`}
-                                        required
-                                    />
-                                </div>
+                                <Input
+                                    id="position"
+                                    type="number"
+                                    name="position"
+                                    placeholder="2"
+                                    value={input.position}
+                                    onChange={changeEventHandler}
+                                    className={`bg-white/50 dark:bg-gray-900/50 rounded-xl focus:ring-red-500 border-gray-200 dark:border-white/10 dark:text-white ${errors.position ? 'border-red-500' : ''}`}
+                                    required
+                                />
                                 {errors.position && <p className="mt-1 text-xs text-red-500">{errors.position}</p>}
                             </div>
                         </div>

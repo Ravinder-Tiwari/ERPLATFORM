@@ -44,7 +44,7 @@ const Navbar = () => {
   }
 
   const NavLinks = ({ isMobile }) => {
-    const linkClass = isMobile 
+    const linkClass = isMobile
       ? 'block px-4 py-3 text-base font-medium text-gray-700 dark:text-gray-200 hover:text-red-600 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors duration-200'
       : 'text-sm font-semibold text-gray-700 dark:text-gray-200 hover:text-red-600 dark:hover:text-red-400 transition-colors duration-200 px-1 py-0.5 relative after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 after:bg-red-600 after:transition-all hover:after:w-full'
 
@@ -56,7 +56,7 @@ const Navbar = () => {
               <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
             </span>
           </Link>
-          <Link to="/jobs" className={linkClass}>Jobs</Link>
+          <Link to="/admin/jobs" className={linkClass}>Jobs</Link>
           <Link to="/contact" className={linkClass}>Contact</Link>
         </>
       )
@@ -140,8 +140,8 @@ const Navbar = () => {
 
           {/* Mobile menu button */}
           <div className='md:hidden'>
-            <button 
-              onClick={() => setIsMenuOpen(!isMenuOpen)} 
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
               className='text-gray-800 dark:text-white hover:text-red-600 dark:hover:text-red-400 transition-colors duration-300 p-2'
             >
               {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
