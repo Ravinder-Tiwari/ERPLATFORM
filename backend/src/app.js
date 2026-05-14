@@ -59,6 +59,12 @@ const corsOptions = {
   credentials: true
 };
 
+
+app.use(morgan("dev"));
+
+app.get("/", (req, res) => {
+  res.send("Welcome to prep4Job API");
+});
 app.use(cors(corsOptions));
 
 
