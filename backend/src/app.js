@@ -63,8 +63,9 @@ const corsOptions = {
 app.use(morgan("dev"));
 
 app.get("/", (req, res) => {
-  res.send("Welcome to prep4Job API");
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
+
 app.use(cors(corsOptions));
 
 
