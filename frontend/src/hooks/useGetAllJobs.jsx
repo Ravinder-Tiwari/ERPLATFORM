@@ -32,12 +32,13 @@ const useGetAllJobs = () => {
 
             } catch (error) {
                 console.error("Error fetching jobs:", error);
+                dispatch(setAllJobs([]));
             }
         }
 
         fetchAllJobs();
 
-    }, [dispatch]);
+    }, [dispatch, searchedQuery]);
 
     return null;
 }

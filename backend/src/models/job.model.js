@@ -51,6 +51,10 @@ const jobSchema = new mongoose.Schema({
     isActive: {
         type: Boolean,
         default: true
+    },
+    isFilled: {
+        type: Boolean,
+        default: false
     }
 },{timestamps:true});
 export const Job = mongoose.model("Job", jobSchema);

@@ -120,6 +120,7 @@ export const getAllJobs = async (req, res) => {
         const keyword = req.query.keyword || "";
         const query = {
             isActive: true,
+            position: { $gt: 0 },
             $or: [
                 { title: { $regex: keyword, $options: "i" } },
                 { description: { $regex: keyword, $options: "i" } },
@@ -128,12 +129,6 @@ export const getAllJobs = async (req, res) => {
         const jobs = await Job.find(query).populate({
             path: "company"
         }).sort({ createdAt: -1 });
-        if (!jobs.length) {
-            return res.status(404).json({
-                message: "Jobs not found.",
-                success: false
-            })
-        };
         return res.status(200).json({
             jobs,
             success: true
@@ -146,9 +141,14 @@ export const getAllJobs = async (req, res) => {
 export const getJobById = async (req, res) => {
     try {
         const jobId = req.params.id;
-        const job = await Job.findById(jobId).populate({
-            path:"applications"
-        });
+        const job = await Job.findById(jobId)
+            .populate({
+                path: "company"
+            })
+            .populate({
+                path:"applications",
+                select: "applicant status createdAt"
+            });
         if (!job) {
             return res.status(404).json({
                 message: "Jobs not found.",
@@ -164,16 +164,22 @@ export const getJobById = async (req, res) => {
 export const getAdminJobs = async (req, res) => {
     try {
         const adminId = req.id;
-        const jobs = await Job.find({ created_by: adminId, isActive: true }).populate({
-            path:'company',
-            createdAt:-1
-        });
-        if (!jobs) {
-            return res.status(404).json({
-                message: "Jobs not found.",
-                success: false
+        const jobs = await Job.find({
+            created_by: adminId,
+            isActive: true,
+            position: { $gt: 0 }
+        })
+            .populate({
+                path:'company'
             })
-        };
+            .populate({
+                path: 'applications',
+                match: {
+                    status: { $ne: 'rejected' }
+                },
+                select: 'status applicant createdAt'
+            })
+            .sort({ createdAt: -1 });
         return res.status(200).json({
             jobs,
             success: true
@@ -208,6 +214,7 @@ export const deleteJob = async (req, res) => {
 
         // Soft delete - set isActive to false
         job.isActive = false;
+        job.isFilled = false;
         await job.save();
 
         return res.status(200).json({

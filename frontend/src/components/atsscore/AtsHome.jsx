@@ -1,14 +1,10 @@
 import React, { useState } from 'react';
-import { Document, Page, pdfjs } from 'react-pdf';
 import { ATS_RESUME_SCORE_END_POINT } from '@/utils/constant';
 import { motion } from 'framer-motion';
 import FileUpload from './components/FileUpload';
 import ScoreCard from './components/ScoreCard';
 import AnalysisSection from './components/AnalysisSection';
 import CTASection from './components/CTASection';
-
-// Set up PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 export default function AtsHome() {
   const [file, setFile] = useState(null);

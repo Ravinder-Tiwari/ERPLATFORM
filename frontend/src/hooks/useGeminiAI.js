@@ -1,28 +1,42 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { useState } from "react";
+import { aiService } from "../services/ai.service";
 
 const useGeminiAI = () => {
+
   const [loading, setLoading] = useState(false);
-  const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-  const genAI = new GoogleGenerativeAI(API_KEY);
 
   const generateContent = async (prompt) => {
+
     try {
+
       setLoading(true);
-      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const text = response.text();
-      return text;
+
+      // Call AI service
+      const response =
+        await aiService.generateResponse(prompt);
+
+      return response;
+
     } catch (error) {
-      console.error("AI Generation Error:", error);
-      throw error;
+
+      console.error(
+        "AI Hook Error:",
+        error
+      );
+
+      return "Sorry, something went wrong.";
+
     } finally {
+
       setLoading(false);
+
     }
   };
 
-  return { generateContent, loading };
+  return {
+    generateContent,
+    loading
+  };
 };
 
-export default useGeminiAI; 
+export default useGeminiAI;

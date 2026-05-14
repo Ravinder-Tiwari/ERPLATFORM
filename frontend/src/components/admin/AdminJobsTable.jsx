@@ -1,29 +1,30 @@
-import React, { useEffect, useState } from 'react'
+/* eslint-disable react/prop-types */
+import { useEffect, useState } from 'react'
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '../ui/table'
 import { Avatar, AvatarImage } from '../ui/avatar'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
-import { Edit2, Eye, MoreHorizontal, Briefcase, Trash2 } from 'lucide-react'
-import { useSelector } from 'react-redux'
+import { Edit2, Eye, MoreHorizontal, Trash2 } from 'lucide-react'
+import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Badge } from '../ui/badge'
-import { Tab } from 'react-bootstrap'
 import axios from 'axios'
 import { JOB_API_END_POINT } from '@/utils/constant'
 import { successToast, errorToast } from '@/utils/toast'
+import { removeJobFromAllAdminJobs } from '@/redux/jobSlice'
 
 const AdminJobsTable = ({ onJobClick }) => { 
     const {allAdminJobs, searchJobByText} = useSelector(store=>store.job);
     const [filterJobs, setFilterJobs] = useState(allAdminJobs);
+    const dispatch = useDispatch();
     const navigate = useNavigate();
-    const { singleJob } = useSelector(store => store.job);
 
 
     useEffect(()=>{ 
         const filteredJobs = allAdminJobs.filter((job)=>{
             if(!searchJobByText){
                 return true;
-            };
+            }
             return job?.title?.toLowerCase().includes(searchJobByText.toLowerCase()) || job?.company?.name.toLowerCase().includes(searchJobByText.toLowerCase());
         });
         setFilterJobs(filteredJobs);
@@ -34,8 +35,7 @@ const AdminJobsTable = ({ onJobClick }) => {
             const res = await axios.delete(`${JOB_API_END_POINT}/delete/${jobId}`, { withCredentials: true });
             if (res.data.success) {
                 successToast(res.data.message);
-                // Refresh the jobs list
-                window.location.reload();
+                dispatch(removeJobFromAllAdminJobs(jobId));
             }
         } catch (error) {
             errorToast(error.response?.data?.message || 'Failed to delete job');
@@ -86,7 +86,7 @@ const AdminJobsTable = ({ onJobClick }) => {
                             <TableCell>{job?.location}</TableCell>
                             <TableCell>{job?.salary}</TableCell>
                             <TableCell>{new Date(job?.createdAt).toLocaleDateString()}</TableCell>
-                         <TableCell>{ singleJob?.applications?.length|| 0}</TableCell> 
+                            <TableCell>{job?.applications?.length || 0}</TableCell>
                             <TableCell>
                                 <Badge variant={job?.isActive ? "success" : "secondary"}>
                                     {job?.isActive ? "Active" : "Inactive"}

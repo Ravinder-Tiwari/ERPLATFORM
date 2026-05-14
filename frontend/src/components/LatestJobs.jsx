@@ -11,10 +11,10 @@ const LatestJobs = () => {
     const {allJobs} = useSelector(store=>store.job);
    
     return (
-        <div className='max-w-7xl mx-auto px-4 md:px-8 pb-20 '>
+        <div className='max-w-7xl mx-auto px-4 md:px-8 pb-20 relative'>
 
        <svg
-        className="absolute top-0 left-0 w-1/2 h-1/3 opacity-10 z-[-1] animate-move-slow"
+        className="absolute top-0 left-0 w-1/2 h-1/3 opacity-10 z-[-1] pointer-events-none animate-move-slow"
         viewBox="0 0 1000 1000"
         xmlns="http://www.w3.org/2000/svg"
       >

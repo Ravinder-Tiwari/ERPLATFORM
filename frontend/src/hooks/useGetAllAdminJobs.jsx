@@ -15,10 +15,11 @@ const useGetAllAdminJobs = () => {
                 }
             } catch (error) {
                 console.log(error);
+                dispatch(setAllAdminJobs([]));
             }
         }
         fetchAllAdminJobs();
-    },[])
+    },[dispatch])
 }
 
 export default useGetAllAdminJobs

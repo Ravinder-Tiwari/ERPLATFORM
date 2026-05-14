@@ -1,14 +1,16 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import ApplicantsTable from './ApplicantsTable'
 import { useDispatch, useSelector } from 'react-redux'
 import { fetchApplicants } from '@/redux/applicationSlice'
 import { motion } from 'framer-motion'
+import ResumePreviewSidebar from './ResumePreviewSidebar'
 
 const Applicants = () => {
     const { id } = useParams()
     const dispatch = useDispatch()
     const { applicants } = useSelector(store => store.application)
+    const [previewApplicant, setPreviewApplicant] = useState(null)
 
     useEffect(() => {
         if (id) {
@@ -17,6 +19,14 @@ const Applicants = () => {
             dispatch(fetchApplicants())
         }
     }, [dispatch, id])
+
+    const handleOpenResumePreview = (applicant) => {
+        setPreviewApplicant(applicant)
+    }
+
+    const handleCloseResumePreview = () => {
+        setPreviewApplicant(null)
+    }
 
     return (
         <div className='dark:bg-gray-900 bg-gray-50 min-h-screen'>
@@ -30,8 +40,17 @@ const Applicants = () => {
                 <h1 className='font-bold text-2xl mb-6 text-gray-800 dark:text-white'>
                     {id ? 'Job Applicants' : 'All Applicants'}
                 </h1>
-                <ApplicantsTable applicants={applicants} />
+                <ApplicantsTable
+                    applicants={applicants}
+                    onViewResume={handleOpenResumePreview}
+                />
             </motion.div>
+
+            <ResumePreviewSidebar
+                applicant={previewApplicant}
+                isOpen={Boolean(previewApplicant)}
+                onClose={handleCloseResumePreview}
+            />
         </div>
     )
 }

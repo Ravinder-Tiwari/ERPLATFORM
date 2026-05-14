@@ -75,6 +75,19 @@ const applicationSlice = createSlice({
     reducers:{
         setAllApplicants:(state,action) => {
             state.applicants = action.payload;
+        },
+        updateApplicantStatus:(state, action) => {
+            const { applicationId, status } = action.payload;
+            state.applicants = state.applicants.map((application) =>
+                application._id === applicationId
+                    ? { ...application, status }
+                    : application
+            );
+        },
+        removeApplicantById:(state, action) => {
+            state.applicants = state.applicants.filter(
+                (application) => application._id !== action.payload
+            );
         }
     },
     extraReducers: (builder) => {
@@ -96,5 +109,9 @@ const applicationSlice = createSlice({
     }
 });
 
-export const {setAllApplicants} = applicationSlice.actions;
+export const {
+  setAllApplicants,
+  updateApplicantStatus,
+  removeApplicantById
+} = applicationSlice.actions;
 export default applicationSlice.reducer;

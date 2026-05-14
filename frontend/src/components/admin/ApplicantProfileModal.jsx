@@ -1,13 +1,21 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '../ui/dialog'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar'
-import { Mail, Phone, MapPin, Award, FileText, Download, User, Calendar } from 'lucide-react'
+import { Mail, Phone, Award, FileText, Download, Eye, Calendar } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { getResumeDownloadUrl, getResumeFileName } from '@/utils/resume'
 
-const ApplicantProfileModal = ({ isOpen, onClose, applicant, onUpdateStatus }) => {
-  const [selectedStatus, setSelectedStatus] = useState(applicant?.status || 'Pending')
+const formatStatusLabel = (status = 'pending') =>
+  `${status.charAt(0).toUpperCase()}${status.slice(1).toLowerCase()}`
+
+const ApplicantProfileModal = ({ isOpen, onClose, applicant, onUpdateStatus, onViewResume }) => {
+  const [selectedStatus, setSelectedStatus] = useState(formatStatusLabel(applicant?.status))
+
+  useEffect(() => {
+    setSelectedStatus(formatStatusLabel(applicant?.status))
+  }, [applicant])
   
   if (!applicant) return null;
 
@@ -114,17 +122,27 @@ const ApplicantProfileModal = ({ isOpen, onClose, applicant, onUpdateStatus }) =
                 <FileText className="w-5 h-5 mr-2 text-blue-500" />
                 Resume
               </h3>
-              <a 
-                href={applicant?.applicant?.profile?.resume} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="inline-flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
-              >
-                <Download className="w-4 h-4" />
-                <span>Download Resume</span>
-              </a>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onViewResume?.(applicant)
+                  }}
+                  className="inline-flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+                >
+                  <Eye className="w-4 h-4" />
+                  <span>View Resume</span>
+                </button>
+                <a 
+                  href={getResumeDownloadUrl(applicant?.applicant?._id)}
+                  className="inline-flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition-colors"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Download Resume</span>
+                </a>
+              </div>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                File: {applicant?.applicant?.profile?.resumeOriginalName || 'Resume'}
+                File: {getResumeFileName(applicant?.applicant?.profile)}
               </p>
             </div>
           )}

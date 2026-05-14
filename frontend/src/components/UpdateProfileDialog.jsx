@@ -9,6 +9,7 @@ import axios from 'axios';
 import { USER_API_END_POINT } from '@/utils/constant';
 import { setUser } from '@/redux/authSlice';
 import { successToast, errorToast } from '@/utils/toast';
+import { getResumeFileName, getResumeViewUrl } from '@/utils/resume';
 
 const UpdateProfileDialog = ({ open, setOpen }) => {
     const { user } = useSelector(store => store.auth);
@@ -21,8 +22,8 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
         file: null,
     });
 
-    const resumeUrl = user?.profile?.resume;
-    const resumeName = user?.profile?.resumeOriginalName || "Previous Resume";
+    const resumeUrl = getResumeViewUrl(user?.profile);
+    const resumeName = getResumeFileName(user?.profile);
 
     const dispatch = useDispatch();
 
@@ -46,8 +47,6 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
         
         if (input.file) {
             formData.append("file", input.file);
-        } else if (resumeUrl) {
-            formData.append("file", resumeUrl);
         }
 
         try {
@@ -130,7 +129,7 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
                             />
                         </div>
                         <div className='space-y-2 pt-2'>
-                            <Label htmlFor="file" className="text-sm font-semibold text-gray-700 dark:text-gray-300">Resume (PDF)</Label>
+                            <Label htmlFor="file" className="text-sm font-semibold text-gray-700 dark:text-gray-300">Resume (PDF, DOC, DOCX)</Label>
                             <div className="flex flex-col gap-2">
                                 <div className="flex items-center gap-3">
                                     <label htmlFor="file" className="cursor-pointer bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 text-gray-900 dark:text-white py-2 px-4 rounded-xl inline-flex items-center text-sm font-medium transition-all">
@@ -158,7 +157,7 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
                                     id="file"
                                     name="file"
                                     type="file"
-                                    accept="application/pdf"
+                                    accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                                     onChange={fileChangeHandler}
                                     className="hidden"
                                 />

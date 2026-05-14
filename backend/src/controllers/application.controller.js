@@ -44,6 +44,13 @@ export const applyJob = async (req, res) => {
             })
         }
 
+        if (!job.isActive || job.position <= 0) {
+            return res.status(400).json({
+                message: "This job is no longer accepting applications.",
+                success: false
+            });
+        }
+
         // Create new application
         const newApplication = await Application.create({
             job: jobId,
@@ -124,6 +131,9 @@ export const getApplicants = async (req, res) => {
         // Find job and populate applications + applicant details
         const job = await Job.findById(jobId).populate({
             path: 'applications',
+            match: {
+                status: { $ne: 'rejected' }
+            },
             options: { sort: { createdAt: -1 } },
 
             // Populate applicant data inside applications
@@ -140,6 +150,13 @@ export const getApplicants = async (req, res) => {
             })
         };
 
+        if (job.created_by.toString() !== req.id.toString()) {
+            return res.status(403).json({
+                message: "You are not allowed to view applicants for this job.",
+                success: false
+            });
+        }
+
         // Add job info with every application
         const applications = job.applications.map((application) => ({
             ...application.toObject(),
@@ -149,6 +166,8 @@ export const getApplicants = async (req, res) => {
                 _id: job._id,
                 title: job.title,
                 company: job.company,
+                position: job.position,
+                isActive: job.isActive,
             }
         }));
 
@@ -163,7 +182,7 @@ export const getApplicants = async (req, res) => {
     }
 }
 
-// ================= GET ALL UNIQUE APPLICANTS FOR ADMIN =================
+// ================= GET ALL APPLICANTS FOR ADMIN =================
 export const getAdminApplicants = async (req, res) => {
     try {
 
@@ -175,6 +194,9 @@ export const getAdminApplicants = async (req, res) => {
             created_by: adminId
         }).populate({
             path: 'applications',
+            match: {
+                status: { $ne: 'rejected' }
+            },
             options: { sort: { createdAt: -1 } },
 
             // Populate applicant details
@@ -193,39 +215,15 @@ export const getAdminApplicants = async (req, res) => {
                     _id: job._id,
                     title: job.title,
                     company: job.company,
+                    position: job.position,
+                    isActive: job.isActive,
                 }
             }))
         );
 
-        // Array for storing unique applicants
-        const uniqueApplications = [];
-
-        // Set to track already added applicants
-        const seenApplicants = new Set();
-
-        // Loop through applications
-        for (const application of applications) {
-
-            // Convert applicant id into string safely
-            const applicantId =
-                application.applicant?._id?.toString?.() ||
-                application.applicant?.toString?.() ||
-                application._id.toString();
-
-            // Check if applicant already exists
-            if (!seenApplicants.has(applicantId)) {
-
-                // Add applicant id to set
-                seenApplicants.add(applicantId);
-
-                // Push unique application
-                uniqueApplications.push(application);
-            }
-        }
-
-        // Return unique applications
+        // Return all non-rejected applications
         return res.status(200).json({
-            applications: uniqueApplications,
+            applications,
             success: true
         });
 
@@ -244,17 +242,29 @@ export const updateStatus = async (req, res) => {
         // Get application id from params
         const applicationId = req.params.id;
 
+        const normalizedStatus =
+            typeof status === 'string' ? status.toLowerCase().trim() : '';
+        const allowedStatuses = ['pending', 'accepted', 'rejected'];
+
         // Check if status exists
-        if (!status) {
+        if (!normalizedStatus) {
             return res.status(400).json({
                 message: 'status is required',
                 success: false
             })
         };
 
+        if (!allowedStatuses.includes(normalizedStatus)) {
+            return res.status(400).json({
+                message: 'Invalid status value.',
+                success: false
+            });
+        }
+
         // Find application using application id
-        const application = await Application.findOne({
-            _id: applicationId
+        const application = await Application.findById(applicationId).populate({
+            path: 'job',
+            select: 'title company created_by position isActive isFilled'
         });
 
         // If application not found
@@ -265,16 +275,97 @@ export const updateStatus = async (req, res) => {
             })
         };
 
+        if (!application.job) {
+            return res.status(404).json({
+                message: "Job not found for this application.",
+                success: false
+            });
+        }
+
+        if (application.job.created_by.toString() !== req.id.toString()) {
+            return res.status(403).json({
+                message: "You are not allowed to update this application.",
+                success: false
+            });
+        }
+
+        const previousStatus = application.status;
+        const job = application.job;
+
+        if (previousStatus === normalizedStatus) {
+            return res.status(200).json({
+                message: "Status updated successfully.",
+                success: true,
+                application: {
+                    _id: application._id,
+                    status: application.status,
+                },
+                job: {
+                    _id: job._id,
+                    position: job.position,
+                    isActive: job.isActive,
+                    isFilled: job.isFilled
+                },
+                removedFromRecruiterQueue: normalizedStatus === 'rejected',
+                jobRemovedFromListings: !job.isActive || job.position <= 0
+            });
+        }
+
+        if (previousStatus !== 'accepted' && normalizedStatus === 'accepted') {
+            if ((!job.isActive && !job.isFilled) || job.position <= 0) {
+                return res.status(400).json({
+                    message: "No open positions are left for this job.",
+                    success: false
+                });
+            }
+
+            job.position -= 1;
+
+            if (job.position === 0) {
+                job.isFilled = true;
+                job.isActive = false;
+            }
+        }
+
+        if (previousStatus === 'accepted' && normalizedStatus !== 'accepted') {
+            job.position += 1;
+
+            if (job.isFilled && job.position > 0) {
+                job.isFilled = false;
+                job.isActive = true;
+            }
+        }
+
         // Update application status
-        application.status = status.toLowerCase();
+        application.status = normalizedStatus;
 
         // Save updated application
-        await application.save();
+        await Promise.all([application.save(), job.save()]);
+
+        const filledJobMessage =
+            normalizedStatus === 'accepted' && !job.isActive && job.position === 0
+                ? ' Applicant accepted and the job is now filled, so it has been removed from active listings.'
+                : '';
 
         // Success response
         return res.status(200).json({
-            message: "Status updated successfully.",
-            success: true
+            message:
+                normalizedStatus === 'rejected'
+                    ? "Applicant rejected and removed from the recruiter list."
+                    : `Status updated successfully.${filledJobMessage}`,
+            success: true,
+            application: {
+                _id: application._id,
+                status: application.status,
+            },
+            job: {
+                _id: job._id,
+                position: job.position,
+                isActive: job.isActive,
+                isFilled: job.isFilled
+            },
+            removedFromRecruiterQueue: normalizedStatus === 'rejected',
+            jobRemovedFromListings: !job.isActive || job.position <= 0
         });
 
     } catch (error) {

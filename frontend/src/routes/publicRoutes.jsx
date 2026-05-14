@@ -2,6 +2,7 @@ import { lazy } from 'react';
 import MainLayout from '../layouts/MainLayout';
 import Roadmap from '@/components/Roadmap';
 import ProtectedFeature from '@/components/shared/ProtectedFeature';
+import CodeEditor from '@/components/CodeEditor';
 
 const Home = lazy(() => import('../components/Home'));
 const Login = lazy(() => import('../components/auth/Login'));

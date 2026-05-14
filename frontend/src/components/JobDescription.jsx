@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
 import { useParams, useNavigate } from 'react-router-dom'
@@ -12,7 +12,9 @@ import { CalendarDays, MapPin, Briefcase, DollarSign, Users, Clock } from 'lucid
 const JobDescription = () => {
   const { singleJob } = useSelector(store => store.job)
   const { user } = useSelector(store => store.auth)
-  const isInitiallyApplied = singleJob?.applications?.some(application => application.applicant === user?._id) || false
+  const isInitiallyApplied = singleJob?.applications?.some(
+    (application) => String(application.applicant) === user?._id
+  ) || false
   const [isApplied, setIsApplied] = useState(isInitiallyApplied)
 
   const params = useParams()
@@ -20,6 +22,7 @@ const JobDescription = () => {
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const canApply = !user || user?.role === 'student'
+  const isJobClosed = !singleJob?.isActive || singleJob?.position <= 0
 
   const applyJobHandler = async () => {
     if (!user) {
@@ -49,7 +52,11 @@ const JobDescription = () => {
         const res = await axios.get(`${JOB_API_END_POINT}/get/${jobId}`, { withCredentials: true })
         if (res.data.success) {
           dispatch(setSingleJob(res.data.job))
-          setIsApplied(res.data.job.applications.some(application => application.applicant === user?._id))
+          setIsApplied(
+            res.data.job.applications.some(
+              (application) => String(application.applicant) === user?._id
+            )
+          )
         }
       } catch (error) {
         console.log(error)
@@ -94,14 +101,16 @@ const JobDescription = () => {
               </div>
               {canApply && (
                 <Button
-                  onClick={isApplied ? null : applyJobHandler}
-                  disabled={isApplied}
+                  onClick={isApplied || isJobClosed ? null : applyJobHandler}
+                  disabled={isApplied || isJobClosed}
                   className={`mt-6 sm:mt-0 px-10 py-4 rounded-xl text-lg font-bold transition-all duration-300 ${isApplied
+                    ? "bg-gray-400 dark:bg-gray-700 cursor-not-allowed opacity-50"
+                    : isJobClosed
                     ? "bg-gray-400 dark:bg-gray-700 cursor-not-allowed opacity-50"
                     : "bg-red-600 hover:bg-red-700 text-white red-glow shadow-lg shadow-red-500/20"
                     }`}
                 >
-                  {isApplied ? "Already Applied" : "Apply Now"}
+                  {isApplied ? "Already Applied" : isJobClosed ? "Position Filled" : "Apply Now"}
                 </Button>
               )}
             </div>
@@ -116,7 +125,7 @@ const JobDescription = () => {
               <div className="flex items-center p-4 rounded-2xl bg-white/50 dark:bg-white/5 border border-white/10">
                 <Clock className="w-6 h-6 mr-4 text-red-600 dark:text-red-400" />
                 <span className="text-lg">
-                  <strong className="text-gray-900 dark:text-white">Experience:</strong> <span className="text-gray-600 dark:text-gray-400">{singleJob?.experience} years</span>
+                  <strong className="text-gray-900 dark:text-white">Experience:</strong> <span className="text-gray-600 dark:text-gray-400">{singleJob?.experienceLevel} years</span>
                 </span>
               </div>
               <div className="flex items-center p-4 rounded-2xl bg-white/50 dark:bg-white/5 border border-white/10">

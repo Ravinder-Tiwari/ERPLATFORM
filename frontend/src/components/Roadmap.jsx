@@ -1,4 +1,6 @@
+/* eslint-disable react/prop-types */
 import { useState, useCallback, useEffect } from "react";
+import { useSelector } from "react-redux";
 import ReactFlow, {
   MiniMap,
   Controls,
@@ -148,25 +150,68 @@ const nodeData = {
   },
 };
 
+const ROADMAP_STORAGE_KEY_PREFIX = "student-roadmap-progress";
+const defaultRoadmapActivity = {
+  viewedNodeIds: [],
+  resourceClicks: {},
+  lastSelectedNodeId: null,
+  lastInteractedAt: null,
+};
+
+const isValidRoadmapNodeId = (id) =>
+  typeof id === "string" && Object.prototype.hasOwnProperty.call(nodeData, id);
+
+const createRoadmapStorageKey = (userId) =>
+  `${ROADMAP_STORAGE_KEY_PREFIX}:${userId || "guest"}`;
+
+const readRoadmapProgress = (userId) => {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const rawValue = window.localStorage.getItem(createRoadmapStorageKey(userId));
+    return rawValue ? JSON.parse(rawValue) : null;
+  } catch (error) {
+    console.error("Unable to read roadmap progress from localStorage", error);
+    return null;
+  }
+};
+
+const writeRoadmapProgress = (userId, value) => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(
+      createRoadmapStorageKey(userId),
+      JSON.stringify(value)
+    );
+  } catch (error) {
+    console.error("Unable to write roadmap progress to localStorage", error);
+  }
+};
+
 const treeTheme = {
-  canvas: "#04140b",
-  panel: "#0b2516",
-  panelSoft: "#143925",
-  panelBorder: "#2b6b43",
-  textPrimary: "#ecfdf3",
-  textMuted: "#9ec9af",
-  textDim: "#5f8f73",
-  accent: "#86efac",
-  accentStrong: "#22c55e",
-  edge: "#4f9368",
-  overlay: "#020b0573",
+  canvas: "#080c18",
+  panel: "rgba(10, 14, 26, 0.85)",
+  panelSoft: "rgba(22, 28, 45, 0.75)",
+  panelBorder: "rgba(255, 255, 255, 0.07)",
+  textPrimary: "#f8fafc",
+  textMuted: "#94a3b8",
+  textDim: "#64748b",
+  accent: "#ef4444",
+  accentStrong: "#dc2626",
+  edge: "rgba(255, 255, 255, 0.15)",
+  overlay: "rgba(0, 0, 0, 0.6)",
 };
 
 const categoryConfig = {
-  foundation: { bg: "#f0fdf4", border: "#4ade80", badge: "#16a34a", badgeText: "Foundation" },
-  core: { bg: "#dcfce7", border: "#22c55e", badge: "#15803d", badgeText: "Core" },
-  tools: { bg: "#d1fae5", border: "#10b981", badge: "#047857", badgeText: "Tools" },
-  advanced: { bg: "#bbf7d0", border: "#34d399", badge: "#065f46", badgeText: "Advanced" },
+  foundation: { bg: "rgba(15, 23, 42, 0.7)", border: "rgba(239, 68, 68, 0.5)", badge: "#ef4444", badgeText: "Foundation" },
+  core: { bg: "rgba(15, 23, 42, 0.7)", border: "rgba(59, 130, 246, 0.5)", badge: "#3b82f6", badgeText: "Core" },
+  tools: { bg: "rgba(15, 23, 42, 0.7)", border: "rgba(16, 185, 129, 0.5)", badge: "#10b981", badgeText: "Tools" },
+  advanced: { bg: "rgba(15, 23, 42, 0.7)", border: "rgba(139, 92, 246, 0.5)", badge: "#8b5cf6", badgeText: "Advanced" },
 };
 
 // ─── INITIAL NODES ────────────────────────────────────────────────────────────
@@ -227,12 +272,14 @@ function CustomNode({ data }) {
         minWidth: 180,
         maxWidth: 220,
         boxShadow: isSelected
-          ? "0 0 0 3px #86efac66, 0 18px 32px #00000055"
-          : "0 10px 22px #03160c24",
+          ? "0 0 0 3px rgba(239, 68, 68, 0.3), 0 18px 32px rgba(0, 0, 0, 0.5)"
+          : "0 4px 24px rgba(0, 0, 0, 0.4)",
         cursor: "pointer",
         transition: "all 0.18s ease",
         position: "relative",
         userSelect: "none",
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
       }}
     >
       <Handle type="target" position={Position.Top} style={{ background: cat.border, width: 8, height: 8 }} />
@@ -242,7 +289,7 @@ function CustomNode({ data }) {
           position: "absolute", top: -8, right: -8,
           background: treeTheme.accentStrong, borderRadius: "50%",
           width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 11, color: "#fff", boxShadow: "0 1px 4px #0003",
+          fontSize: 11, color: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.5)",
         }}>✓</span>
       )}
 
@@ -261,7 +308,7 @@ function CustomNode({ data }) {
       <div style={{
         fontWeight: 800,
         fontSize: 16,
-        color: isSelected ? "#dcfce7" : "#123121",
+        color: isSelected ? "#ffffff" : "#f1f5f9",
         fontFamily: "'Plus Jakarta Sans', 'DM Sans', sans-serif",
         lineHeight: 1.2,
       }}>
@@ -276,7 +323,7 @@ function CustomNode({ data }) {
 const nodeTypes = { custom: CustomNode };
 
 // ─── SIDEBAR ──────────────────────────────────────────────────────────────────
-function Sidebar({ node, onClose, completed, toggleCompleted }) {
+function Sidebar({ node, onClose, completed, toggleCompleted, onResourceClick }) {
   const info = node ? nodeData[node.id] : null;
   const cat = info ? categoryConfig[info.category] : null;
   const isComplete = node ? completed.includes(node.id) : false;
@@ -339,9 +386,9 @@ function Sidebar({ node, onClose, completed, toggleCompleted }) {
         <button
           onClick={onClose}
           style={{
-            background: "#225235",
-            border: "none",
-            color: "#b7e4c7",
+            background: "rgba(255, 255, 255, 0.05)",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            color: "#94a3b8",
             width: 32, height: 32,
             borderRadius: 8,
             cursor: "pointer",
@@ -350,6 +397,8 @@ function Sidebar({ node, onClose, completed, toggleCompleted }) {
             transition: "all 0.15s",
             flexShrink: 0,
           }}
+          onMouseEnter={e => { e.currentTarget.style.color = "#fff"; e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}
+          onMouseLeave={e => { e.currentTarget.style.color = "#94a3b8"; e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)"; }}
         >×</button>
       </div>
 
@@ -388,7 +437,7 @@ function Sidebar({ node, onClose, completed, toggleCompleted }) {
                 fontFamily: "'DM Mono', monospace",
               }}>Overview</h3>
               <p style={{
-                color: "#d8f8e2", lineHeight: 1.7, fontSize: 14, margin: 0,
+                color: "#cbd5e1", lineHeight: 1.7, fontSize: 14, margin: 0,
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
               }}>
                 {info.description}
@@ -409,13 +458,14 @@ function Sidebar({ node, onClose, completed, toggleCompleted }) {
                     href={r.url}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() => onResourceClick(node.id, r.url)}
                     style={{
                       display: "flex", alignItems: "center", gap: 12,
-                      background: "#163e29",
+                      background: "rgba(255, 255, 255, 0.03)",
                       border: `1px solid ${treeTheme.panelBorder}`,
                       borderRadius: 10,
                       padding: "12px 16px",
-                      color: "#ecfdf3",
+                      color: "#f8fafc",
                       textDecoration: "none",
                       fontSize: 14,
                       fontWeight: 500,
@@ -424,11 +474,11 @@ function Sidebar({ node, onClose, completed, toggleCompleted }) {
                     }}
                     onMouseEnter={e => {
                       e.currentTarget.style.borderColor = cat?.badge || treeTheme.accentStrong;
-                      e.currentTarget.style.background = treeTheme.panel;
+                      e.currentTarget.style.background = "rgba(255, 255, 255, 0.06)";
                     }}
                     onMouseLeave={e => {
                       e.currentTarget.style.borderColor = treeTheme.panelBorder;
-                      e.currentTarget.style.background = "#163e29";
+                      e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)";
                     }}
                   >
                     <span style={{
@@ -439,7 +489,7 @@ function Sidebar({ node, onClose, completed, toggleCompleted }) {
                       fontSize: 12, fontWeight: 800, flexShrink: 0,
                     }}>{i + 1}</span>
                     <span style={{ flex: 1 }}>{r.name}</span>
-                    <span style={{ color: "#7aac8e", fontSize: 12 }}>↗</span>
+                    <span style={{ color: "#64748b", fontSize: 12 }}>↗</span>
                   </a>
                 ))}
               </div>
@@ -456,9 +506,9 @@ function Legend() {
   return (
     <div style={{
       position: "absolute", bottom: 90, left: 16, zIndex: 10,
-      background: "#0d2c1bcc",
-      backdropFilter: "blur(10px)",
-      WebkitBackdropFilter: "blur(10px)",
+      background: "rgba(10, 14, 26, 0.8)",
+      backdropFilter: "blur(12px)",
+      WebkitBackdropFilter: "blur(12px)",
       border: `1px solid ${treeTheme.panelBorder}`,
       borderRadius: 12, padding: "12px 16px",
       display: "flex", flexDirection: "column", gap: 8,
@@ -487,9 +537,9 @@ function ProgressBar({ completed }) {
   return (
     <div style={{
       position: "absolute", top: 70, left: "50%", transform: "translateX(-50%)",
-      zIndex: 10, background: "#0d2c1bcc",
-      backdropFilter: "blur(10px)",
-      WebkitBackdropFilter: "blur(10px)",
+      zIndex: 10, background: "rgba(10, 14, 26, 0.8)",
+      backdropFilter: "blur(12px)",
+      WebkitBackdropFilter: "blur(12px)",
       border: `1px solid ${treeTheme.panelBorder}`, borderRadius: 999,
       padding: "6px 16px",
       display: "flex", alignItems: "center", gap: 10,
@@ -497,11 +547,11 @@ function ProgressBar({ completed }) {
     }}>
       <span style={{ fontSize: 12, color: treeTheme.textDim }}>Progress</span>
       <div style={{
-        width: 110, height: 6, background: "#1a422b", borderRadius: 999, overflow: "hidden",
+        width: 110, height: 6, background: "rgba(255, 255, 255, 0.1)", borderRadius: 999, overflow: "hidden",
       }}>
         <div style={{
           width: `${pct}%`, height: "100%",
-          background: "linear-gradient(90deg, #34d399, #16a34a)",
+          background: "linear-gradient(90deg, #ef4444, #dc2626)",
           borderRadius: 999, transition: "width 0.4s ease",
         }} />
       </div>
@@ -562,11 +612,64 @@ function SideRail({ side, title, subtitle, points }) {
 
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 export default function Roadmap() {
+  const { user } = useSelector((store) => store.auth);
+  const userId = user?._id || "guest";
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, , onEdgesChange] = useEdgesState(initialEdges);
   const [selectedNode, setSelectedNode] = useState(null);
   const [completed, setCompleted] = useState([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [roadmapActivity, setRoadmapActivity] = useState(defaultRoadmapActivity);
+  const [hydratedUserId, setHydratedUserId] = useState(null);
+
+  useEffect(() => {
+    const savedProgress = readRoadmapProgress(userId);
+    const completedNodeIds = Array.isArray(savedProgress?.completedNodeIds)
+      ? savedProgress.completedNodeIds.filter(isValidRoadmapNodeId)
+      : [];
+    const viewedNodeIds = Array.isArray(savedProgress?.viewedNodeIds)
+      ? savedProgress.viewedNodeIds.filter(isValidRoadmapNodeId)
+      : [];
+    const resourceClicks =
+      savedProgress?.resourceClicks && typeof savedProgress.resourceClicks === "object"
+        ? Object.fromEntries(
+            Object.entries(savedProgress.resourceClicks).filter(([nodeId]) =>
+              isValidRoadmapNodeId(nodeId)
+            )
+          )
+        : {};
+
+    setCompleted(completedNodeIds);
+    setRoadmapActivity({
+      viewedNodeIds,
+      resourceClicks,
+      lastSelectedNodeId: isValidRoadmapNodeId(savedProgress?.lastSelectedNodeId)
+        ? savedProgress.lastSelectedNodeId
+        : null,
+      lastInteractedAt:
+        typeof savedProgress?.lastInteractedAt === "string"
+          ? savedProgress.lastInteractedAt
+          : null,
+    });
+    setSelectedNode(null);
+    setSidebarOpen(false);
+    setHydratedUserId(userId);
+  }, [userId]);
+
+  useEffect(() => {
+    if (hydratedUserId !== userId) {
+      return;
+    }
+
+    writeRoadmapProgress(userId, {
+      completedNodeIds: completed,
+      viewedNodeIds: roadmapActivity.viewedNodeIds,
+      resourceClicks: roadmapActivity.resourceClicks,
+      lastSelectedNodeId: roadmapActivity.lastSelectedNodeId,
+      lastInteractedAt: roadmapActivity.lastInteractedAt,
+      updatedAt: new Date().toISOString(),
+    });
+  }, [userId, completed, roadmapActivity, hydratedUserId]);
 
   // Inject selected + completed into node data prop
   useEffect(() => {
@@ -576,14 +679,53 @@ export default function Roadmap() {
     })));
   }, [selectedNode, completed, setNodes]);
 
+  const trackRoadmapInteraction = useCallback((nodeId, updater) => {
+    setRoadmapActivity((prev) => {
+      const nextViewedNodeIds = prev.viewedNodeIds.includes(nodeId)
+        ? prev.viewedNodeIds
+        : [...prev.viewedNodeIds, nodeId];
+      const baseState = {
+        ...prev,
+        viewedNodeIds: nextViewedNodeIds,
+        lastSelectedNodeId: nodeId,
+        lastInteractedAt: new Date().toISOString(),
+      };
+
+      return typeof updater === "function" ? updater(baseState) : baseState;
+    });
+  }, []);
+
   const onNodeClick = useCallback((_, node) => {
     setSelectedNode(node);
     setSidebarOpen(true);
-  }, []);
+    trackRoadmapInteraction(node.id);
+  }, [trackRoadmapInteraction]);
 
   const toggleCompleted = useCallback((id) => {
     setCompleted(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
-  }, []);
+    trackRoadmapInteraction(id);
+  }, [trackRoadmapInteraction]);
+
+  const handleResourceClick = useCallback((nodeId, resourceUrl) => {
+    trackRoadmapInteraction(nodeId, (baseState) => {
+      const nodeResourceClicks =
+        baseState.resourceClicks?.[nodeId] &&
+        typeof baseState.resourceClicks[nodeId] === "object"
+          ? baseState.resourceClicks[nodeId]
+          : {};
+
+      return {
+        ...baseState,
+        resourceClicks: {
+          ...baseState.resourceClicks,
+          [nodeId]: {
+            ...nodeResourceClicks,
+            [resourceUrl]: (nodeResourceClicks[resourceUrl] || 0) + 1,
+          },
+        },
+      };
+    });
+  }, [trackRoadmapInteraction]);
 
   const closePanel = useCallback(() => {
     setSidebarOpen(false);
@@ -596,29 +738,29 @@ export default function Roadmap() {
     <div style={{
       width: "100vw",
       height: "100vh",
-      background: "radial-gradient(circle at 15% 20%, #1e5a34 0%, transparent 22%), radial-gradient(circle at 86% 18%, #17492d 0%, transparent 18%), radial-gradient(circle at 55% 102%, #123f27 0%, transparent 26%), linear-gradient(160deg, #031008 0%, #0a2414 48%, #04120a 100%)",
+      background: "radial-gradient(circle at 15% 20%, rgba(220, 38, 38, 0.12) 0%, transparent 22%), radial-gradient(circle at 86% 18%, rgba(220, 38, 38, 0.07) 0%, transparent 18%), radial-gradient(circle at 55% 102%, rgba(99, 102, 241, 0.06) 0%, transparent 26%), #080c18",
       position: "relative",
       overflow: "hidden",
     }}>
       {/* Google Fonts */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500;700&display=swap');
-        .react-flow__node:hover > div { transform: translateY(-2px) scale(1.03); box-shadow: 0 18px 34px #03170d8f !important; }
-        .react-flow__controls { background: #123623 !important; border: 1px solid #2b6b43 !important; border-radius: 10px !important; overflow: hidden; }
-        .react-flow__controls-button { background: #123623 !important; border-color: #2b6b43 !important; color: #9ec9af !important; }
-        .react-flow__controls-button:hover { background: #1f5134 !important; }
-        .react-flow__minimap { background: #123623 !important; border: 1px solid #2b6b43 !important; border-radius: 10px !important; }
+        .react-flow__node:hover > div { transform: translateY(-2px) scale(1.03); box-shadow: 0 18px 34px rgba(0, 0, 0, 0.5) !important; }
+        .react-flow__controls { background: rgba(10, 14, 26, 0.85) !important; border: 1px solid rgba(255, 255, 255, 0.07) !important; border-radius: 10px !important; overflow: hidden; backdrop-filter: blur(12px); }
+        .react-flow__controls-button { background: transparent !important; border-color: rgba(255, 255, 255, 0.07) !important; color: #94a3b8 !important; }
+        .react-flow__controls-button:hover { background: rgba(255, 255, 255, 0.05) !important; }
+        .react-flow__minimap { background: rgba(10, 14, 26, 0.85) !important; border: 1px solid rgba(255, 255, 255, 0.07) !important; border-radius: 10px !important; backdrop-filter: blur(12px); }
         .canopy-rail {
           position: absolute;
           z-index: 9;
           width: min(280px, 20vw);
-          background: #0d2c1bcc;
-          border: 1px solid #2b6b43;
+          background: rgba(10, 14, 26, 0.8);
+          border: 1px solid rgba(255, 255, 255, 0.07);
           border-radius: 16px;
           padding: 16px;
-          box-shadow: 0 16px 36px #00000045;
-          backdrop-filter: blur(10px);
-          -webkit-backdrop-filter: blur(10px);
+          box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
         }
         .canopy-rail.left { top: 145px; left: 20px; }
         .canopy-rail.right { top: 145px; right: 20px; }
@@ -631,13 +773,14 @@ export default function Roadmap() {
       {/* Header */}
       <div style={{
         position: "absolute", top: 0, left: 0, right: 0, zIndex: 20,
-        background: "linear-gradient(180deg, #03130acc 60%, #03130a00)",
+        background: "linear-gradient(180deg, rgba(8, 12, 24, 0.9) 30%, rgba(8, 12, 24, 0))",
         padding: "18px 28px 40px",
         display: "flex", alignItems: "center", gap: 16,
         pointerEvents: "none",
       }}>
         <div style={{
-          background: "#22c55e", color: "#032110", fontWeight: 900,
+          background: "rgba(239, 68, 68, 0.2)", color: "#fca5a5", fontWeight: 900,
+          border: "1px solid rgba(239, 68, 68, 0.3)",
           fontFamily: "'Plus Jakarta Sans', sans-serif",
           fontSize: 13, letterSpacing: "0.08em", textTransform: "uppercase",
           padding: "4px 10px", borderRadius: 6,
@@ -695,7 +838,7 @@ export default function Roadmap() {
         maxZoom={2.3}
         proOptions={{ hideAttribution: true }}
       >
-        <Background variant={BackgroundVariant.Dots} gap={28} size={1.2} color="#245339" />
+        <Background variant={BackgroundVariant.Dots} gap={28} size={1.2} color="rgba(255, 255, 255, 0.15)" />
         <Controls position="bottom-right" />
         <MiniMap
           position="bottom-right"
@@ -728,6 +871,7 @@ export default function Roadmap() {
         onClose={closePanel}
         completed={completed}
         toggleCompleted={toggleCompleted}
+        onResourceClick={handleResourceClick}
       />
     </div>
   );

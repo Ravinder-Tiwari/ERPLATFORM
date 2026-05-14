@@ -53,7 +53,7 @@ const About = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
               >
-                <feature.icon size={64} className="text-red-500 mb-6" />
+                <feature.icon size={64} className="text-red-500 mb-6 flex-shrink-0" />
                 <h3 className="text-2xl font-semibold mb-3 text-gray-800 dark:text-white">{feature.title}</h3>
                 <p className="text-gray-600 dark:text-gray-400">{feature.description}</p>
               </motion.div>

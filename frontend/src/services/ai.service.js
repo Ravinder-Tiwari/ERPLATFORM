@@ -1,56 +1,38 @@
-import axios from 'axios';
+import axios from "axios";
 
-const GEMINI_API_KEY = process.env.REACT_APP_GEMINI_API_KEY;
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
+const AI_API_URL = "http://localhost:3000/api/ai";
 
 class AIService {
-  async generateResponse(prompt) {
+
+  // Send message to backend AI controller
+  async generateResponse(message) {
     try {
+
       const response = await axios.post(
-        `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`,
+        `${AI_API_URL}/chat`,
         {
-          contents: [
-            {
-              parts: [
-                {
-                  text: prompt
-                }
-              ]
-            }
-          ],
-          generationConfig: {
-            temperature: 0.7,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 1024,
-          },
-          safetySettings: [
-            {
-              category: "HARM_CATEGORY_HARASSMENT",
-              threshold: "BLOCK_MEDIUM_AND_ABOVE"
-            },
-            {
-              category: "HARM_CATEGORY_HATE_SPEECH",
-              threshold: "BLOCK_MEDIUM_AND_ABOVE"
-            },
-            {
-              category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-              threshold: "BLOCK_MEDIUM_AND_ABOVE"
-            },
-            {
-              category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-              threshold: "BLOCK_MEDIUM_AND_ABOVE"
-            }
-          ]
+          message
+        },
+        {
+          withCredentials: true,
+          headers: {
+            "Content-Type": "application/json"
+          }
         }
       );
 
-      return response.data.candidates[0].content.parts[0].text;
+      return response.data.reply;
+
     } catch (error) {
-      console.error('Error generating AI response:', error);
-      throw error;
+
+      console.error(
+        "AI Service Error:",
+        error.response?.data || error.message
+      );
+
+      return "Sorry, AI is currently unavailable.";
     }
   }
 }
 
-export const aiService = new AIService(); 
+export const aiService = new AIService();

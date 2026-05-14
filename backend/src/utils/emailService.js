@@ -29,27 +29,27 @@ export const sendContactEmail = async (contactData) => {
     });
 
     const mailOptions = {
-      from: process.env.EMAIL_USER,
+      from: `"${contactData.name}" <${process.env.EMAIL_USER}>`,
       to: process.env.CONTACT_RECIPIENT_EMAIL,
       replyTo: contactData.email,
       subject: 'New Contact Form Submission',
       html: `
-        <h3>New Contact Message</h3>
-        <p><strong>Name:</strong> ${contactData.name}</p>
-        <p><strong>Email:</strong> ${contactData.email}</p>
-        <p><strong>Message:</strong> ${contactData.message}</p>
-        <p>Received at: ${new Date().toLocaleString()}</p>
-      `
+    <h3>New Contact Message</h3>
+    <p><strong>Name:</strong> ${contactData.name}</p>
+    <p><strong>Email:</strong> ${contactData.email}</p>
+    <p><strong>Message:</strong> ${contactData.message}</p>
+    <p>Received at: ${new Date().toLocaleString()}</p>
+  `
     };
 
     // Send email with detailed error handling
     const info = await transporter.sendMail(mailOptions);
     console.log('Email sent successfully:', info);
 
-    return { 
-      success: true, 
+    return {
+      success: true,
       message: 'Email sent successfully',
-      messageId: info.messageId 
+      messageId: info.messageId
     };
   } catch (error) {
     console.error('Detailed Email Sending Error:', {
@@ -59,8 +59,8 @@ export const sendContactEmail = async (contactData) => {
       response: error.response,
       stack: error.stack
     });
-    return { 
-      success: false, 
+    return {
+      success: false,
       message: 'Failed to send email',
       errorDetails: {
         name: error.name,

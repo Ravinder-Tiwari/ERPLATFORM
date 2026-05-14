@@ -30,7 +30,7 @@ const CategoryCarousel = () => {
 
           {/* Animated Grid SVG Background with Multiple Light Colors */}
           <svg
-            className="absolute top-0 left-0 w-full h-full opacity-30 z-[-1]"
+            className="absolute top-0 left-0 w-full h-full opacity-30 z-[-1] pointer-events-none"
             viewBox="0 0 1000 1000"
             xmlns="http://www.w3.org/2000/svg"
           >

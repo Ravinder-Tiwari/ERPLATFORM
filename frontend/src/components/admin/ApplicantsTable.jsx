@@ -1,20 +1,27 @@
-import React, { useState } from 'react'
+/* eslint-disable react/prop-types */
+import { useState } from 'react'
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '../ui/table'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { MoreHorizontal, FileText, Mail, Phone, Eye } from 'lucide-react';
-import { useSelector } from 'react-redux';
+import { MoreHorizontal, FileText, Mail, Phone, Eye, Download } from 'lucide-react';
+import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'sonner';
 import { APPLICATION_API_END_POINT } from '@/utils/constant';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import { Badge } from '../ui/badge';
 import ApplicantProfileModal from './ApplicantProfileModal';
+import { getResumeDownloadUrl, getResumeFileName } from '@/utils/resume';
+import { removeApplicantById, updateApplicantStatus } from '@/redux/applicationSlice';
+import { syncJobAvailability } from '@/redux/jobSlice';
 
 const shortlistingStatus = ["Accepted", "Rejected", "Pending"];
+const formatStatusLabel = (status = "pending") =>
+    `${status.charAt(0).toUpperCase()}${status.slice(1).toLowerCase()}`;
 
-const ApplicantsTable = ({ applicants: applicantsProp }) => {
+const ApplicantsTable = ({ applicants: applicantsProp, onViewResume }) => {
     const [selectedApplicant, setSelectedApplicant] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const dispatch = useDispatch();
     const { applicants } = useSelector(store => store.application);
     const applicationRows = Array.isArray(applicantsProp)
         ? applicantsProp
@@ -27,12 +34,26 @@ const ApplicantsTable = ({ applicants: applicantsProp }) => {
             axios.defaults.withCredentials = true;
             const res = await axios.post(`${APPLICATION_API_END_POINT}/status/${id}/update`, { status });
             if (res.data.success) {
+                const updatedStatus = res.data.application?.status || status.toLowerCase();
+
+                if (res.data.removedFromRecruiterQueue) {
+                    dispatch(removeApplicantById(id));
+                    handleCloseModal();
+                } else {
+                    dispatch(updateApplicantStatus({
+                        applicationId: id,
+                        status: updatedStatus
+                    }));
+                }
+
+                if (res.data.job) {
+                    dispatch(syncJobAvailability(res.data.job));
+                }
+
                 toast.success(res.data.message);
-                // Refresh the page to see updated status
-                window.location.reload();
             }
         } catch (error) {
-            toast.error(error.response.data.message);
+            toast.error(error.response?.data?.message || "Failed to update applicant status.");
         }
     }
 
@@ -44,6 +65,12 @@ const ApplicantsTable = ({ applicants: applicantsProp }) => {
     const handleCloseModal = () => {
         setIsModalOpen(false);
         setSelectedApplicant(null);
+    }
+
+    const handleResumePreview = (applicant) => {
+        setIsModalOpen(false);
+        setSelectedApplicant(null);
+        onViewResume?.(applicant);
     }
 
     return (
@@ -91,18 +118,39 @@ const ApplicantsTable = ({ applicants: applicantsProp }) => {
                             </TableCell>
                             <TableCell>
                                 {item.applicant?.profile?.resume ? (
-                                    <a className="flex items-center text-blue-600 hover:underline cursor-pointer" href={item?.applicant?.profile?.resume} target="_blank" rel="noopener noreferrer">
-                                        <FileText className="w-4 h-4 mr-2" />
-                                        {item?.applicant?.profile?.resumeOriginalName}
-                                    </a>
+                                    <div className="space-y-2">
+                                        <div className="flex items-center text-gray-900 dark:text-white">
+                                            <FileText className="w-4 h-4 mr-2 text-blue-600" />
+                                            <span className="text-sm font-medium break-all">
+                                                {getResumeFileName(item?.applicant?.profile)}
+                                            </span>
+                                        </div>
+                                        <div className="flex flex-wrap items-center gap-3 text-sm">
+                                            <button
+                                                type="button"
+                                                className="inline-flex items-center text-blue-600 hover:underline"
+                                                onClick={() => handleResumePreview(item)}
+                                            >
+                                                <Eye className="w-4 h-4 mr-1" />
+                                                View
+                                            </button>
+                                            <a
+                                                className="inline-flex items-center text-emerald-600 hover:underline"
+                                                href={getResumeDownloadUrl(item?.applicant?._id)}
+                                            >
+                                                <Download className="w-4 h-4 mr-1" />
+                                                Download
+                                            </a>
+                                        </div>
+                                    </div>
                                 ) : (
                                     <span className="text-gray-500">Not available</span>
                                 )}
                             </TableCell>
                             <TableCell>{new Date(item?.createdAt).toLocaleDateString()}</TableCell>
                             <TableCell>
-                                <Badge variant={item.status === 'Accepted' ? 'success' : item.status === 'Rejected' ? 'destructive' : 'secondary'}>
-                                    {item.status}
+                                <Badge variant={item?.status?.toLowerCase() === 'accepted' ? 'success' : item?.status?.toLowerCase() === 'rejected' ? 'destructive' : 'secondary'}>
+                                    {formatStatusLabel(item?.status)}
                                 </Badge>
                             </TableCell>
                             <TableCell className="text-right">
@@ -151,6 +199,7 @@ const ApplicantsTable = ({ applicants: applicantsProp }) => {
                 onClose={handleCloseModal} 
                 applicant={selectedApplicant}
                 onUpdateStatus={statusHandler}
+                onViewResume={handleResumePreview}
             />
         </motion.div>
     )
