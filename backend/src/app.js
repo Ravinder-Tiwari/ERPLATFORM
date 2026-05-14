@@ -68,10 +68,10 @@ app.use("/api/auth", authRouter);
 app.use("/api/ai", chatRouter);
 app.use("/api", atsRoutes);
 
-// ================= Static Public Folder =================
+// ================= Public Folder =================
 
-// backend/src/public
-const publicPath = path.join(__dirname, "public");
+// backend/public
+const publicPath = path.join(__dirname, "../public");
 
 // Serve static files
 app.use(express.static(publicPath));
