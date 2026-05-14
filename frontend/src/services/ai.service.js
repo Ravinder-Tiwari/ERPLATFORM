@@ -1,6 +1,6 @@
 import axios from "axios";
-
-const AI_API_URL = "http://localhost:3000/api/ai";
+import { BASE_URL } from "../utils/constant";
+const AI_API_URL = `${BASE_URL}/ai`;
 
 class AIService {
 

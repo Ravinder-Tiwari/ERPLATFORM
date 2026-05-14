@@ -1,0 +1,1 @@
+import{u as e,r as t,t as o,al as c,am as i}from"./index-BsZJ8x9C.js";const p=()=>{const a=e();t.useEffect(()=>{(async()=>{try{const s=await o.get(`${c}/get`,{withCredentials:!0});console.log("Companies fetched:",s.data.companies),s.data.success&&a(i(s.data.companies))}catch(s){console.log("Error fetching companies:",s)}})()},[a])};export{p as u};

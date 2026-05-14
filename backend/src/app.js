@@ -38,10 +38,11 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
 
-// Allow both localhost and Vercel URLs
+// Allow localhost and production frontend URLs
 const allowedOrigins = [
   "http://localhost:5173",
-];
+  process.env.FRONTEND_URL
+].filter(Boolean);
 
 const corsOptions = {
   origin: function (origin, callback) {
