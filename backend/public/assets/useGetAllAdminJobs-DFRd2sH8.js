@@ -1,1 +1,0 @@
-import{u as e,r as o,t as c,J as i,aq as a}from"./index-BsZJ8x9C.js";const l=()=>{const t=e();o.useEffect(()=>{(async()=>{try{const s=await c.get(`${i}/getadminjobs`,{withCredentials:!0});s.data.success&&t(a(s.data.jobs))}catch(s){console.log(s),t(a([]))}})()},[t])};export{l as u};

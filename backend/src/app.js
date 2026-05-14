@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-dotenv.config({});
+dotenv.config();
 
 import express from "express";
 import cookieParser from "cookie-parser";
@@ -8,6 +8,7 @@ import morgan from "morgan";
 import path from "path";
 import { fileURLToPath } from "url";
 
+// Routes
 import userRoute from "./routes/user.route.js";
 import companyRoute from "./routes/company.route.js";
 import jobRoute from "./routes/job.route.js";
@@ -22,11 +23,11 @@ import chatRouter from "./routes/chatAI.routes.js";
 
 const app = express();
 
-// Fix __dirname for ES modules
+// ================= FIX __dirname =================
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// ================= Middleware =================
+// ================= MIDDLEWARE =================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -41,7 +42,7 @@ const allowedOrigins = [
 const corsOptions = {
   origin: function (origin, callback) {
 
-    // Allow requests without origin
+    // Allow requests without origin (Postman/mobile apps)
     if (!origin) return callback(null, true);
 
     if (!allowedOrigins.includes(origin)) {
@@ -50,12 +51,13 @@ const corsOptions = {
 
     return callback(null, true);
   },
+
   credentials: true,
 };
 
 app.use(cors(corsOptions));
 
-// ================= API Routes =================
+// ================= API ROUTES =================
 app.use("/api/v1/user", userRoute);
 app.use("/api/v1/company", companyRoute);
 app.use("/api/v1/job", jobRoute);
@@ -68,17 +70,17 @@ app.use("/api/auth", authRouter);
 app.use("/api/ai", chatRouter);
 app.use("/api", atsRoutes);
 
-// ================= Public Folder =================
+// ================= FRONTEND SERVE =================
 
-// backend/public
-const publicPath = path.join(__dirname, "../public");
+// Path to frontend/dist
+const frontendPath = path.join(__dirname, "../../frontend/dist");
 
 // Serve static files
-app.use(express.static(publicPath));
+app.use(express.static(frontendPath));
 
-// Serve index.html
+// React/Vite Routing Support
 app.get("*", (req, res) => {
-  res.sendFile(path.join(publicPath, "index.html"));
+  res.sendFile(path.join(frontendPath, "index.html"));
 });
 
 export default app;
