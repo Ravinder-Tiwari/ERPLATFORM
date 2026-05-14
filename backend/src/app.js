@@ -75,12 +75,12 @@ app.use("/api", atsRoutes);
 // Path to frontend/dist
 // ================= FRONTEND SERVE =================
 
-const frontendPath = path.join(__dirname, "../../frontend/dist")
+// ================= FRONTEND =================
 
-// Serve static files
+const frontendPath = path.join(__dirname, "../../frontend/dist");
+
 app.use(express.static(frontendPath));
 
-// React/Vite routing support
 app.get("*", (req, res) => {
   res.sendFile(path.join(frontendPath, "index.html"));
 });
