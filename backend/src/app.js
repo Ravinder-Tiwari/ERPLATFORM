@@ -31,7 +31,11 @@ const __dirname = path.dirname(__filename);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(morgan("dev"));
+
+
+// Serve static files from public folder
+app.use(express.static(path.join(__dirname, "public")));
+
 
 // ================= CORS =================
 const allowedOrigins = [
@@ -55,6 +59,11 @@ const corsOptions = {
   credentials: true,
 };
 
+
+app.use(morgan("dev"));
+
+
+
 app.use(cors(corsOptions));
 
 // ================= API ROUTES =================
@@ -70,24 +79,8 @@ app.use("/api/auth", authRouter);
 app.use("/api/ai", chatRouter);
 app.use("/api", atsRoutes);
 
-// ================= FRONTEND SERVE =================
-
-// Path to frontend/dist
-// ================= FRONTEND SERVE =================
-
-// ================= FRONTEND =================
-
-// ================= FRONTEND =================
-
-// backend/public
-const publicPath = path.join(__dirname, "../public");
-
-// Serve static files
-app.use(express.static(publicPath));
-
-// React/Vite routing support
 app.get("*", (req, res) => {
-  res.sendFile(path.join(publicPath, "index.html"));
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 export default app;
