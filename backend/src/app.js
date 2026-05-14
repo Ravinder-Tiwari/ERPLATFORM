@@ -35,7 +35,7 @@ app.use(cookieParser());
 
 
 // Serve static files from public folder
-app.use(express.static(path.join(__dirname, "public")));
+// app.use(express.static(path.join(__dirname, "public")));
 
 
 // Allow localhost and production frontend URLs
