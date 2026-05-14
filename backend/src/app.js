@@ -75,7 +75,7 @@ app.use("/api", atsRoutes);
 // Path to frontend/dist
 // ================= FRONTEND SERVE =================
 
-const frontendPath = path.join(process.cwd(), "../frontend/dist");
+const frontendPath = path.join(__dirname, "../../frontend/dist")
 
 // Serve static files
 app.use(express.static(frontendPath));
