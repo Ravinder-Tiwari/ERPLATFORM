@@ -202,11 +202,7 @@ Store secrets in environment variables or cloud secret managers
 📬 Contact & Support
 For queries, feedback, or feature requests:
 
-GitHub: @git-x
 
-Issues: Open one here
-
-Made with ❤️ by git-X
 
 
 
