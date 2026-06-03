@@ -18,9 +18,9 @@ export const sendEmail = async ({ to, subject, text, html }) => {
     from: process.env.EMAIL_USER || process.env.GOOGLE_USER,
     to,
     subject,
-    text,
+    text, 
     html,
   });
-
+console.log(sendEmail)
   return info;
 };

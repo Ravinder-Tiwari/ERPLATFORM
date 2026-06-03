@@ -31,6 +31,7 @@ const sanitizeUser = (user) => ({
 
 export const registerController = async (req, res, next) => {
   try {
+    console.log("hii")
     const { fullname, email, phoneNumber, password, role } = req.body;
 
     const existingUser = await User.findOne({ email });
@@ -75,7 +76,7 @@ export const registerController = async (req, res, next) => {
 
     let emailSent = true;
     try {
-      await sendEmail({
+      const res = await sendEmail({
         to: email,
         subject: "Verify your account",
         html: `
@@ -85,6 +86,7 @@ export const registerController = async (req, res, next) => {
           <p>If you did not create this account, you can ignore this email.</p>
         `,
       });
+      console.log(res)
     } catch (emailError) {
       emailSent = false;
       console.error("Verification email failed:", emailError.message);
